@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  sftp-source:
+    image: atmoz/sftp
+    container_name: sftp-source
+    ports:
+      - "2222:22"
+    volumes:
+      - ./data/source:/home/sourceuser/upload
+    command: sourceuser:pass:1001:1001
+
+  sftp-target:
+    image: atmoz/sftp
+    container_name: sftp-target
+    ports:
+      - "2223:22"
+    volumes:
+      - ./data/target:/home/targetuser/upload
+    command: targetuser:pass:1002:1002
+networks:
+  default:
+    name: shared-network
+    driver: bridge

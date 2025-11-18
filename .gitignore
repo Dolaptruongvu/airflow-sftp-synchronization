@@ -1,0 +1,30 @@
+# --- System Files ---
+.DS_Store
+Thumbs.db
+
+# --- Python & PyCharm ---
+__pycache__/
+*.py[cod]
+*.venv
+.idea/
+.vscode/
+
+# --- Airflow Logs ---
+AirflowDeployment/logs/*
+!AirflowDeployment/logs/.gitkeep
+
+# --- Environment Variables ---
+.env
+
+# --- SFTP ---
+SFTPService/data/source/*
+!SFTPService/data/source/.gitkeep
+!SFTPService/data/source/*.txt
+!SFTPService/data/source/*.csv
+
+
+SFTPService/data/target/*
+!SFTPService/data/target/.gitkeep
+
+# --- Postgres---
+postgres-db-volume/
