@@ -12,17 +12,30 @@ class SFTPConnector(GeneralConnector):
     def list_files(self, path: str) -> List[str]:
         files = []
         try: 
+            clean_base_path = path.rstrip('/')
+            """handle root path case"""
+            if clean_base_path == '':
+                clean_base_path = '/'
             def walk(current_path):
                 for entry in self.sftp.listdir_attr(current_path):
-                    full_path = os.path.join(path, entry.filename).replace('\\', '/')
+                    full_path = os.path.join(current_path, entry.filename).replace('\\', '/')
                     """if it is directory"""
                     if stat.S_ISDIR(entry.st_mode):
                         walk(full_path)
                     else:
                         files.append(full_path)
-            walk(path)
+            walk(clean_base_path)
         except Exception as e:
             print(f"Error listing files in {path}: {e}")
+            return []
+        return files
+    def get_file_size(self, path: str) -> int:
+        try:
+            stat_info = self.sftp.stat(path)
+            return stat_info.st_size
+        except IOError as e:
+            print(f"Error getting file size for {path}: {e}")
+            return -1
     
     def get_file_stream(self, path: str) -> BinaryIO:
         return self.sftp.open(path, 'rb')

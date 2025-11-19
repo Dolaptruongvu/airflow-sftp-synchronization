@@ -19,6 +19,10 @@ class GeneralConnector(ABC):
         """ Ensure directory exists"""
         pass
     @abstractmethod
+    def get_file_size(self, path: str) -> int:
+        """ Get file size"""
+        pass
+    @abstractmethod
     def close(self):
         """ Close the connector"""
         pass
