@@ -41,7 +41,17 @@ class SFTPConnector(GeneralConnector):
         return self.sftp.open(path, 'rb')
     
     def save_file_stream(self, path: str, stream: BinaryIO):
-        self.sftp.putfo(fl=stream, remotepath=path)
+        CHUNK_SIZE = 32 * 1024 * 1024
+        with self.sftp.open(path, 'wb') as target_file:
+            target_file.set_pipelined(True) 
+            
+            while True:
+                data = stream.read(CHUNK_SIZE)
+                if not data:
+                    break
+                target_file.write(data)
+            target_file.set_pipelined(False) 
+            target_file.flush()
 
     def ensure_directory(self, path: str):
         dirname = os.path.dirname(path)

@@ -46,6 +46,14 @@ class DataSynchronizer:
                     if transform:
                         input_stream = transform(source_stream)
                     self.target_connector.save_file_stream(destination_path, input_stream)
+                new_target_size = self.target_connector.get_file_size(destination_path)
+                
+                if new_target_size != source_size:
+                    error_msg = f"Integrity Error: {relative_path} - Source: {source_size}, Target: {new_target_size}"
+                    logging.error(error_msg)
+                    raise Exception(error_msg)
+                
+                logging.info(f"Integrity Check Passed: {relative_path}")
                 synced_count += 1
             except Exception as e:
                 logging.error(f"Error syncing file {relative_path}: {e}")
