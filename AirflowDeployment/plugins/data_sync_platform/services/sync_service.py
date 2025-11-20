@@ -6,8 +6,11 @@ class DataSynchronizer:
     def __init__(self, source_connector: GeneralConnector, target_connector: GeneralConnector):
         self.source_connector = source_connector
         self.target_connector = target_connector
-    def sync_folder(self, source_path: str, target_path: str, transform=None):
+    def sync_folder(self, source_path: str, target_path: str = None, transform=None):
 
+        if target_path is None:
+            target_path = source_path
+        
         """ delete trailing slash"""
         clean_source_path = source_path.rstrip('/')
         clean_target_path = target_path.rstrip('/')

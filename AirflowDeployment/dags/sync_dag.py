@@ -23,7 +23,7 @@ def run_sync():
 
     syncer = DataSynchronizer(source_connector, target_connector)
     try:
-        syncer.sync_folder('upload', 'upload')
+        syncer.sync_folder('upload')
 
     finally:
         syncer.close()
