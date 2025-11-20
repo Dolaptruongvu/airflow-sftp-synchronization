@@ -34,7 +34,7 @@ class SFTPConnector(GeneralConnector):
             stat_info = self.sftp.stat(path)
             return stat_info.st_size
         except IOError as e:
-            logging.error(f"Error getting file size for {path}: {e}")
+            logging.error(f"Error getting file size for {path}: {e} - It could be that the file does not exist in target")
             return -1
     
     def get_file_stream(self, path: str) -> BinaryIO:
