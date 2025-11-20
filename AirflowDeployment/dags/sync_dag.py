@@ -12,7 +12,7 @@ from data_sync_platform.services.sync_service import DataSynchronizer
 default_args = {
     'owner': 'airflow-DLTV',
     'depends_on_past': False,
-    'start_date': datetime(2025, 11, 21),
+    'start_date': datetime(2025, 11, 20),
     'retries': 1,
     'retry_delay': timedelta(minutes=5),
 }
@@ -23,7 +23,7 @@ def run_sync():
 
     syncer = DataSynchronizer(source_connector, target_connector)
     try:
-        syncer.sync_folder('/source', '/source')
+        syncer.sync_folder('upload', 'upload')
 
     finally:
         syncer.close()
@@ -32,7 +32,7 @@ with DAG(
     dag_id='airflow_sftp_sync_dag',
     default_args=default_args,
     schedule='@daily',
-    start_date=datetime(2025, 11, 21),
+    start_date=datetime(2025, 11, 20),
     catchup=False,
     tags=['data-sync'],
 ) as dag:

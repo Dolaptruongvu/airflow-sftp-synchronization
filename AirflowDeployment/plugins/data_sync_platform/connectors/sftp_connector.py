@@ -3,7 +3,7 @@ from data_sync_platform.interface import GeneralConnector
 import os
 from typing import List, BinaryIO
 import stat
-
+import logging
 class SFTPConnector(GeneralConnector):
     def __init__(self, ssh_conn_id: str):
         self.hook = SFTPHook(ssh_conn_id=ssh_conn_id)
@@ -26,7 +26,7 @@ class SFTPConnector(GeneralConnector):
                         files.append(full_path)
             walk(clean_base_path)
         except Exception as e:
-            print(f"Error listing files in {path}: {e}")
+            logging.error(f"Error listing files in {path}: {e}")
             return []
         return files
     def get_file_size(self, path: str) -> int:
@@ -34,7 +34,7 @@ class SFTPConnector(GeneralConnector):
             stat_info = self.sftp.stat(path)
             return stat_info.st_size
         except IOError as e:
-            print(f"Error getting file size for {path}: {e}")
+            logging.error(f"Error getting file size for {path}: {e}")
             return -1
     
     def get_file_stream(self, path: str) -> BinaryIO:
@@ -45,11 +45,25 @@ class SFTPConnector(GeneralConnector):
 
     def ensure_directory(self, path: str):
         dirname = os.path.dirname(path)
-        if dirname:
+        if not dirname or dirname == '/' or dirname == '.':
+            return
+        dirs_to_create = dirname.split('/')
+        current_path = ""
+        
+        for part in dirs_to_create:
+            if not part: continue 
+            
+            
+            current_path = f"{current_path}/{part}" if current_path else part
             try:
-                self.hook.create_directory(dirname)
-            except Exception:
-                pass
+                self.sftp.stat(current_path)
+            except IOError:
+                
+                try:
+                    self.sftp.mkdir(current_path)
+                    logging.info(f"Created directory: {current_path}")
+                except Exception as e:
+                    pass
     def close(self):
         self.sftp.close()
         self.hook.close_conn()
