@@ -1,5 +1,5 @@
 from airflow.providers.sftp.hooks.sftp import SFTPHook
-from data_sync_platform.interfaces import GeneralConnector
+from data_sync_platform.interface import GeneralConnector
 import os
 from typing import List, BinaryIO
 import stat

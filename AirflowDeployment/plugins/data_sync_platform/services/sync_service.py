@@ -23,9 +23,8 @@ class DataSynchronizer:
             if not file_path.startswith(clean_source_path):
                 logging.warning(f"Skipping file with unexpected path: {file_path}")
                 continue
-            "initial file_path : abc/def/ghi.txt, clean_source_path: abc"
+            
             relative_path = os.path.relpath(file_path, clean_source_path).replace('\\', '/')
-            "destination_path : abc/def/ghi.txt"
             destination_path = os.path.join(clean_target_path, relative_path).replace('\\', '/')
 
             try:
