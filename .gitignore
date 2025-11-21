@@ -28,3 +28,6 @@ SFTPService/data/target/*
 
 # --- Postgres---
 postgres-db-volume/
+
+# -- Test Data ---
+2025*/
