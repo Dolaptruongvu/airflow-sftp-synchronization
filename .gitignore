@@ -26,6 +26,9 @@ SFTPService/data/source/*
 SFTPService/data/target/*
 !SFTPService/data/target/.gitkeep
 
+# --- Minio S3 ---
+minio_data/
+
 # --- Postgres---
 postgres-db-volume/
 
