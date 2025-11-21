@@ -15,6 +15,8 @@ default_args = {
     'retry_delay': timedelta(minutes=5),
 }
 
+# List all files in source folder
+
 @task
 def list_files_task(source_folder: str):
     connector = SFTPConnector(ssh_conn_id='source_sftp_conn')
@@ -26,6 +28,7 @@ def list_files_task(source_folder: str):
     finally:
         connector.close()
 
+# Start sync with mapped task
 @task(max_active_tis_per_dag=16)
 def sync_single_file_task( source_folder: str, file_path: str):
     source = SFTPConnector(ssh_conn_id='source_sftp_conn')
@@ -48,6 +51,7 @@ with DAG(
     start_date=datetime(2025, 11, 20),
     catchup=False,
     tags=['data-sync', 'parallel'],
+    max_active_runs=1
 ) as dag:
 
     SOURCE_FOLDER = 'upload' 
