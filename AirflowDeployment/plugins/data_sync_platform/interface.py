@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, BinaryIO
 
+# Define an abstract base class for a general connector
 class GeneralConnector(ABC):
     @abstractmethod
     def list_files(self, path: str) -> List[str]:
