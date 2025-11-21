@@ -37,6 +37,7 @@ class DataSynchronizer:
         relative_path = os.path.relpath(file_path, clean_source).replace('\\', '/')
         destination_path = os.path.join(clean_target, relative_path).replace('\\', '/')
 
+        # handling file sync, if exists and size match, skip
         try:
             s_size = self.source_connector.get_file_size(file_path)
             t_size = self.target_connector.get_file_size(destination_path)
