@@ -1,0 +1,60 @@
+from airflow import DAG
+from airflow.decorators import task
+from datetime import datetime, timedelta
+import sys
+import os
+sys.path.append(os.path.join(os.environ.get('AIRFLOW_HOME', '/opt/airflow'), 'plugins'))
+
+from data_sync_platform.connectors.sftp_connector import SFTPConnector
+from data_sync_platform.connectors.s3_connector import S3Connector
+from data_sync_platform.services.sync_service import DataSynchronizer
+
+default_args = {
+    'owner': 'airflow-DLTV',
+    'retries': 1,
+    'retry_delay': timedelta(minutes=5),
+}
+
+# List all files in source folder
+
+@task
+def list_files_task(source_folder: str):
+    connector = S3Connector(aws_conn_id='source_s3_conn', bucket_name='raw')
+    try:
+        target = SFTPConnector(ssh_conn_id='target_sftp_conn')
+        syncer = DataSynchronizer(connector, target)
+        
+        return syncer.scan_source(source_folder)
+    finally:
+        connector.close()
+
+# Start sync with mapped task
+@task(max_active_tis_per_dag=16)
+def sync_single_file_task( source_folder: str, file_path: str):
+    source = S3Connector(aws_conn_id='source_s3_conn', bucket_name='raw')
+    target = SFTPConnector(ssh_conn_id='target_sftp_conn')
+    
+    syncer = DataSynchronizer(source, target)
+    try:
+        
+        syncer.sync_file(
+            file_path=file_path, 
+            source_root=source_folder
+        )
+    finally:
+        syncer.close()
+
+with DAG(
+    dag_id='airflow_s3_sync_dag',
+    default_args=default_args,
+    schedule='@daily',
+    start_date=datetime(2025, 11, 20),
+    catchup=False,
+    tags=['data-sync', 'parallel'],
+    max_active_runs=1
+) as dag:
+
+    SOURCE_FOLDER = 'upload' 
+
+    files_list = list_files_task(source_folder=SOURCE_FOLDER)
+    sync_single_file_task.partial(source_folder=SOURCE_FOLDER).expand(file_path=files_list)
