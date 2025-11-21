@@ -2,63 +2,68 @@ from data_sync_platform.interface import GeneralConnector
 import logging
 import os
 
+logger = logging.getLogger("airflow.task")
+
 class DataSynchronizer:
     def __init__(self, source_connector: GeneralConnector, target_connector: GeneralConnector):
         self.source_connector = source_connector
         self.target_connector = target_connector
-    def sync_folder(self, source_path: str, target_path: str = None, transform=None):
 
-        if target_path is None:
-            target_path = source_path
-        
-        """ delete trailing slash"""
+    def scan_source(self, source_path: str) -> list:
+        """Just return list of files from source."""
         clean_source_path = source_path.rstrip('/')
-        clean_target_path = target_path.rstrip('/')
         logging.info(f"Scanning source folder: {clean_source_path}")
+        
+        
+        files = self.source_connector.list_files(clean_source_path)
+        
+        return files if files else []
 
-        source_files = self.source_connector.list_files(clean_source_path)
-        logging.info(f"Found {len(source_files)} files in source folder.")
+    # Main processing function
+    def sync_file(self, file_path: str, source_root: str, target_root: str = None, transform=None):
+        """Logic sync atomic cho 1 file."""
+        if target_root is None:
+            target_root = source_root
 
-        skipped_count = 0
-        synced_count = 0
+        clean_source = source_root.rstrip('/')
+        clean_target = target_root.rstrip('/')
 
-        for file_path in source_files:
-            if not file_path.startswith(clean_source_path):
-                logging.warning(f"Skipping file with unexpected path: {file_path}")
-                continue
+       
+        if not file_path.startswith(clean_source):
+            logging.warning(f"Skipped: Path mismatch {file_path}")
+            return
+
+        
+        relative_path = os.path.relpath(file_path, clean_source).replace('\\', '/')
+        destination_path = os.path.join(clean_target, relative_path).replace('\\', '/')
+
+        try:
+            s_size = self.source_connector.get_file_size(file_path)
+            t_size = self.target_connector.get_file_size(destination_path)
+
+            if t_size != -1 and s_size == t_size:
+                logging.info(f"Skipping unchanged: {relative_path}")
+                return
+
+            logging.info(f"Syncing: {relative_path} ({s_size} bytes)")
+
+            self.target_connector.ensure_directory(destination_path)
             
-            relative_path = os.path.relpath(file_path, clean_source_path).replace('\\', '/')
-            destination_path = os.path.join(clean_target_path, relative_path).replace('\\', '/')
+            with self.source_connector.get_file_stream(file_path) as s_stream:
+                in_stream = s_stream
+                if transform:
+                    in_stream = transform(s_stream)
+                self.target_connector.save_file_stream(destination_path, in_stream)
+            new_t_size = self.target_connector.get_file_size(destination_path)
+            if new_t_size != s_size:
+                raise Exception(f"Integrity Error: {relative_path} (Source:{s_size} != Target:{new_t_size})")
 
-            try:
-                source_size = self.source_connector.get_file_size(file_path)
-                target_size = self.target_connector.get_file_size(destination_path)
-                if source_size != -1 and source_size == target_size:
-                    logging.info(f"Skipping unchanged file: {relative_path}")
-                    skipped_count += 1
-                    continue
-                logging.info(f"Syncing file: {relative_path}")
+            logging.info(f"Success: {relative_path}")
 
-                self.target_connector.ensure_directory(destination_path)
+        except Exception as e:
+            logging.error(f"Error processing {relative_path}: {e}")
+            raise e
 
-                with self.source_connector.get_file_stream(file_path) as source_stream:
-                    input_stream = source_stream
-                    if transform:
-                        input_stream = transform(source_stream)
-                    self.target_connector.save_file_stream(destination_path, input_stream)
-                new_target_size = self.target_connector.get_file_size(destination_path)
-                
-                if new_target_size != source_size:
-                    error_msg = f"Integrity Error: {relative_path} - Source: {source_size}, Target: {new_target_size}"
-                    logging.error(error_msg)
-                    raise Exception(error_msg)
-                
-                logging.info(f"Integrity Check Passed: {relative_path}")
-                synced_count += 1
-            except Exception as e:
-                logging.error(f"Error syncing file {relative_path}: {e}")
-                continue
-        logging.info(f"{synced_count} files synced, {skipped_count} files skipped.")
     def close(self):
         self.source_connector.close()
         self.target_connector.close()
