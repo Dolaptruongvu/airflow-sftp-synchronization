@@ -18,6 +18,20 @@ services:
     volumes:
       - ./data/target:/home/targetuser/upload
     command: targetuser:pass:1002:1002
+  # minio:
+  #   image: minio/minio:latest
+  #   container_name: minio
+  #   ports:
+  #     - "9000:9000"
+  #     - "9001:9001"
+  #   environment:
+  #     MINIO_ROOT_USER: admin
+  #     MINIO_ROOT_PASSWORD: admin12345
+  #   command: server /data --console-address ":9001"
+  #   volumes:
+  #     - ./minio_data:/data
+  #   networks:
+  #     - default
 networks:
   default:
     name: shared-network
