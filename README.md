@@ -69,7 +69,41 @@ Access the Airflow UI (default: `localhost:8080`) and create the following conne
 2.  **Prepare Source**: Move the generated folders into `SFTPService/data/source`.
 3.  **Run DAG**:
     *   Trigger **`airflow_sftp_sync_dag`** for SFTP-to-SFTP sync.
-    *   (Optional) Trigger **`airflow_s3_sync_dag`** for S3-to-SFTP sync (requires bucket setup).
+        *   (Optional) Trigger **`airflow_s3_sync_dag`** for S3-to-SFTP sync (requires bucket setup).
+
+---
+
+## 📸 Example Run (SFTP Sync)
+
+### 1. Before Sync
+*Source has data, Target is empty.*
+![Before Sync](./assets/beforeSFTPSync.png)
+
+### 2. Airflow Execution
+*DAG runs with Dynamic Task Mapping (Parallel Processing).*
+![Airflow DAG](./assets/afterSFTPSync_Airflow_Dag.png)
+
+### 3. After Sync Result
+*Target is fully synchronized with Source structure.*
+![After Sync](./assets/afterSFTPSync.png)
+
+---
+
+## 📸 Example Run (S3 to SFTP Sync)
+
+### 1. Before Sync
+*MinIO Source bucket has data.*
+![Before Sync MinIO](./assets/beforeS3Sync_Minio.png)
+*Target SFTP is empty.*
+![Before Sync Target](./assets/beforeS3Sync_TargetEmpty.png)
+
+### 2. Airflow Execution
+*DAG runs with Dynamic Task Mapping.*
+![Airflow DAG S3](./assets/afterS3Sync_Airflow_Dag.png)
+
+### 3. After Sync Result
+*Target SFTP receives data from S3.*
+![After Sync](./assets/afterS3Sync.png)
 
 ---
 
